@@ -2,26 +2,25 @@ import requests
 import json
 import os
 from packaging import version
+from .path import resource_path
 
 url = 'https://raw.githubusercontent.com/abde1khaliq/Wordify/refs/heads/main/src/config/wordify.json'
 
 def check_for_updates():
     try:
-        config_path = os.path.join(os.path.dirname(__file__), "config", "wordify.json")
+        config_path = resource_path("src/config/wordify.json")
         with open(config_path, 'r') as file:
             local_config = json.load(file)
 
         response = requests.get(url)
         remote_config = response.json()
 
-        local_version = version.parse(local_config['version'])
-        remote_version = version.parse(remote_config['version'])
+        local_version = version.parse(str(local_config['version']))
+        remote_version = version.parse(str(remote_config['version']))
 
         if remote_version == local_version:
-            print("✅ This application is up to date.")
             return True
         elif remote_version > local_version:
-            print(f"🔔 Update available: {remote_version}")
             return False
 
     except Exception as error:

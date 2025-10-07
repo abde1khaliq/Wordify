@@ -4,13 +4,15 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pillow = "*"
 pymupdf = "*"
 python-docx = "*"
 requests = "*"
 packaging = "*"
+pyinstaller = "*"
+pillow = "*"
+auto-py-to-exe = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.11"
+python_version = "3.13"
