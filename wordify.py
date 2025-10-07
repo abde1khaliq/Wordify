@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
-from app.logic import extract_text_from_pdf, save_text_to_word_format
+from src.logic import extract_text_from_pdf, save_text_to_word_format
+from src.updater import check_for_updates as cfu
 
 
 class PdfConverterApp:
@@ -11,7 +12,7 @@ class PdfConverterApp:
         self.root.geometry("500x500")
         self.root.configure(bg="#121212")
 
-        image = Image.open("icons/wordify.png").resize((40, 40))
+        image = Image.open("src/assets/wordify.png").resize((40, 40))
         self.logo_image = ImageTk.PhotoImage(image)
 
         self.bg_dark = "#121212"
@@ -98,6 +99,16 @@ class PdfConverterApp:
         updates_btn.pack(pady=20, ipadx=10, ipady=5)
         self.add_button_hover_effect(updates_btn)
 
+        self.about_message_label = tk.Label(
+            self.about_page,
+            text="",
+            bg=self.bg_dark,
+            fg=self.accent_text,
+            font=("Poppins", 10),
+            wraplength=400
+        )
+        self.about_message_label.pack(pady=10)
+
     def show_home(self):
         self.about_page.pack_forget()
         self.home_page.pack(fill="both", expand=True)
@@ -122,8 +133,23 @@ class PdfConverterApp:
         self.message_label.config(text='Successfully Converted your PDF file.')
 
     def check_for_updates(self):
-        # TODO: Add update check logic here
-        pass
+        update_status = cfu()
+
+        if update_status is True:
+            self.about_message_label.config(
+                text="Wordify is up to date.",
+                fg=self.success
+            )
+        elif update_status is False:
+            self.about_message_label.config(
+                text="A new version of Wordify is available.\ndownload the latest release.",
+                fg=self.error
+            )
+        else:
+            self.about_message_label.config(
+                text="Unable to check for updates. Please try again later.",
+                fg=self.error
+            )
 
     def add_button_hover_effect(self, button):
         button.bind("<Enter>", lambda e: button.configure(
