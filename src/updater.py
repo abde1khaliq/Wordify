@@ -3,8 +3,7 @@ import json
 import os
 from packaging import version
 
-url = 'https://raw.githubusercontent.com/abde1khaliq/Wordify/main/app/config/wordify.json'
-
+url = 'https://raw.githubusercontent.com/abde1khaliq/Wordify/refs/heads/main/src/config/wordify.json'
 
 def check_for_updates():
     try:
@@ -18,12 +17,12 @@ def check_for_updates():
         local_version = version.parse(local_config['version'])
         remote_version = version.parse(remote_config['version'])
 
-        if remote_version > local_version:
-            print(f"🔔 Update available: {remote_config['version']}")
-            return False
-        else:
+        if remote_version == local_version:
             print("✅ This application is up to date.")
             return True
+        elif remote_version > local_version:
+            print(f"🔔 Update available: {remote_version}")
+            return False
 
     except Exception as error:
         print("❌ An error occurred in the updater module:", error)
