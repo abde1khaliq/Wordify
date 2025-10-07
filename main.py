@@ -87,7 +87,7 @@ class PdfConverterApp:
     def create_about_page(self):
         self.about_page = tk.Frame(self.content_area, bg=self.bg_dark)
 
-        tk.Label(self.about_page, text="About PDFER", bg=self.bg_dark,
+        tk.Label(self.about_page, text="About Wordify", bg=self.bg_dark,
                  fg=self.text_color, font=("Poppins", 18)).pack(pady=40)
 
         tk.Label(self.about_page, text="Version 1.0.0", bg=self.bg_dark,
