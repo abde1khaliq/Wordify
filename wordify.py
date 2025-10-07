@@ -1,8 +1,7 @@
 import tkinter as tk
-from tkinter import filedialog, PhotoImage
+from tkinter import filedialog
 from PIL import Image, ImageTk
-import fitz
-from docx import Document
+from app.logic import extract_text_from_pdf, save_text_to_word_format
 
 
 class PdfConverterApp:
@@ -81,7 +80,7 @@ class PdfConverterApp:
         self.add_button_hover_effect(convert_btn)
 
         self.message_label = tk.Label(self.home_page, textvariable='',
-                                 bg=self.bg_dark, fg=self.success, font=("Poppins", 10), wraplength=400)
+                                      bg=self.bg_dark, fg=self.success, font=("Poppins", 10), wraplength=400)
         self.message_label.pack(pady=20)
 
     def create_about_page(self):
@@ -113,31 +112,17 @@ class PdfConverterApp:
         if file_path:
             self.selected_file_path.set(file_path)
 
-    def extract_text_from_pdf(self, pdf_path):
-        pdf_file = fitz.open(pdf_path)
-        full_text = ""
-        for page in pdf_file:
-            full_text += page.get_text() + '\n'
-        pdf_file.close()
-        return full_text
-
-    def save_text_to_word_format(self, extracted_content, output_file):
-        doc = Document()
-        for line in extracted_content.splitlines():
-            doc.add_paragraph(line)
-        doc.save(output_file)
-
     def start_conversion(self):
         pdf_path = self.selected_file_path.get()
         if not pdf_path or pdf_path == "No file selected":
             self.selected_file_path.set("Select a PDF file to convert!")
             return
-        extracted_text = self.extract_text_from_pdf(pdf_path)
-        self.save_text_to_word_format(extracted_text, "converted.docx")
+        extracted_text = extract_text_from_pdf(pdf_path)
+        save_text_to_word_format(extracted_text, "converted.docx")
         self.message_label.config(text='Successfully Converted your PDF file.')
 
     def check_for_updates(self):
-        # TODO: Add your update check logic here
+        # TODO: Add update check logic here
         pass
 
     def add_button_hover_effect(self, button):
