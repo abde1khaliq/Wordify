@@ -15,7 +15,9 @@ def check_for_updates():
         remote_config = response.json()
 
         local_version = version.parse(str(local_config['version']))
+        print(local_version)
         remote_version = version.parse(str(remote_config['version']))
+        print(remote_config)
 
         if remote_version == local_version:
             return True
