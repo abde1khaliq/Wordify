@@ -3,7 +3,7 @@ import json
 import os
 from packaging import version
 
-url = 'https://raw.githubusercontent.com/abde1khaliq/Wordify/refs/heads/main/src/config/wordify.json'
+url = 'https://raw.githubusercontent.com/abde1khaliq/Wordify/refs/heads/master/wordify.json'
 
 def check_for_updates():
     try:
