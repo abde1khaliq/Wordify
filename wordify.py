@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from logic import extract_text_from_pdf, save_text_to_word_format
 from updater_file import check_for_updates as cfu
+import webbrowser
 import json
 import os
 
@@ -114,21 +115,18 @@ class Wordify:
         self.settings_btn.pack(side='left', padx=10, pady=10)
 
     def create_pages(self):
-        # Container for pages
         self.pages_container = ctk.CTkFrame(
             self.root,
             fg_color=self.bg_color
         )
         self.pages_container.pack(fill='both', expand=True, padx=20, pady=20)
-        
-        # Home Page
+    
         self.home_page = ctk.CTkFrame(
             self.pages_container,
             fg_color=self.card_bg,
             corner_radius=15
         )
         
-        # Home page content
         home_title = ctk.CTkLabel(
             self.home_page,
             text="Convert Your PDFs",
@@ -145,7 +143,6 @@ class Wordify:
         )
         home_subtitle.pack(pady=(0, 30))
         
-        # File selection area
         file_frame = ctk.CTkFrame(
             self.home_page,
             fg_color=self.secondary_card_bg,
@@ -173,7 +170,6 @@ class Wordify:
         )
         self.file_label.pack(pady=(0, 20))
         
-        # Convert button
         convert_btn = ctk.CTkButton(
             self.home_page,
             text="Convert",
@@ -187,14 +183,12 @@ class Wordify:
         )
         convert_btn.pack(pady=30)
         
-        # About Page
         self.about_page = ctk.CTkFrame(
             self.pages_container,
             fg_color=self.card_bg,
             corner_radius=15
         )
-        
-        # About page content
+
         about_title = ctk.CTkLabel(
             self.about_page,
             text="About Wordify",
@@ -213,7 +207,6 @@ class Wordify:
         )
         about_text.pack(pady=10, padx=30)
         
-        # Check for updates
         update_frame = ctk.CTkFrame(
             self.about_page,
             fg_color=self.secondary_card_bg,
@@ -248,30 +241,36 @@ class Wordify:
         )
         check_update_btn.pack(pady=(0, 15))
         
-        # Version info
+        try:
+            with open('wordify.json', 'r') as file:
+                config = json.load(file)
+                version = config.get("version", "Unknown")
+        except Exception as e:
+            print("⚠️ Failed to load version:", e)
+            version = "Unknown"
+
         version_label = ctk.CTkLabel(
             self.about_page,
-            text="Version 1.0.0",
+            text=f"Version {version}",
             font=self.font_small,
             text_color=self.accent_text
         )
-        version_label.pack(pady=20)
+        version_label.pack(pady=5)
+
 
         self.about_message_label = ctk.CTkLabel(
             self.about_page,
             text='',
             font=self.font_small
         )
-        self.about_message_label.pack(pady=10, padx=10)
+        self.about_message_label.pack()
     
-        # Settings Page
         self.settings_page = ctk.CTkFrame(
             self.pages_container,
             fg_color=self.card_bg,
             corner_radius=15
         )
-        
-        # Settings page content
+
         settings_title = ctk.CTkLabel(
             self.settings_page,
             text="Settings",
@@ -279,8 +278,7 @@ class Wordify:
             text_color=self.text_color
         )
         settings_title.pack(pady=(30, 20))
-        
-        # Appearance settings
+
         appearance_frame = ctk.CTkFrame(
             self.settings_page,
             fg_color=self.secondary_card_bg,
@@ -295,8 +293,7 @@ class Wordify:
             text_color=self.text_color
         )
         appearance_title.pack(pady=(15, 10))
-        
-        # Theme selector
+
         theme_label = ctk.CTkLabel(
             appearance_frame,
             text="Theme:",
@@ -314,8 +311,7 @@ class Wordify:
         )
         theme_option.set("Dark")
         theme_option.pack(pady=(0, 15))
-        
-        # Conversion settings
+
         conversion_frame = ctk.CTkFrame(
             self.settings_page,
             fg_color=self.secondary_card_bg,
@@ -330,8 +326,7 @@ class Wordify:
             text_color=self.text_color
         )
         conversion_title.pack(pady=(15, 10))
-        
-        # Output location
+
         output_label = ctk.CTkLabel(
             conversion_frame,
             text="Default Output Location:",
@@ -358,7 +353,6 @@ class Wordify:
             font=self.font_small
         )
         self.output_path.pack(pady=10, padx=10)
-
 
     def show_page(self, page_name):
         # Hide all pages
@@ -410,27 +404,60 @@ class Wordify:
     def check_for_updates(self):
         try:
             update_status = cfu()
+
             if update_status is True:
                 self.about_message_label.configure(
                     text="Wordify is up to date.",
-                    text_color=self.success
+                    text_color=self.success,
+                    cursor=""
                 )
+
+                if hasattr(self, "download_link_label"):
+                    self.download_link_label.pack_forget()
+
             elif update_status is False:
+                download_url = "https://yourdomain.com/wordify/download"
+
                 self.about_message_label.configure(
-                    text="A new version of Wordify is available.\nDownload the latest release.",
-                    text_color=self.error
+                    text="A new version of Wordify is available.",
+                    text_color=self.error,
+                    cursor=""
                 )
+
+                self.download_link_label = ctk.CTkLabel(
+                    master=self.about_message_label.master,
+                    text="Click here to download.",
+                    text_color="#1E90FF",
+                    cursor="hand2",
+                    font=self.font_small
+                )
+                self.download_link_label.pack()
+
+                def open_download_link(event):
+                    webbrowser.open_new(download_url)
+
+                self.download_link_label.bind("<Button-1>", open_download_link)
+
             else:
                 self.about_message_label.configure(
                     text="Unable to check for updates. Please try again later.",
-                    text_color=self.error
+                    text_color=self.error,
+                    cursor=""
                 )
+
+                if hasattr(self, "download_link_label"):
+                    self.download_link_label.pack_forget()
+
         except Exception as e:
             print("⚠️ Update check failed:", e)
             self.about_message_label.configure(
                 text="Error checking for updates.",
-                text_color=self.error
+                text_color=self.error,
+                cursor=""
             )
+
+            if hasattr(self, "download_link_label"):
+                self.download_link_label.pack_forget()
 
     def select_output_folder(self):
         try:
