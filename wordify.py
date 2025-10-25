@@ -2,6 +2,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from logic import extract_text_from_pdf, save_text_to_word_format
 from updater_file import check_for_updates as cfu
+from res_path import resource_path
 import webbrowser
 import json
 import os
@@ -15,7 +16,8 @@ class Wordify:
         self.root.title('Wordify')
         self.root.geometry("500x600")
         self.root.resizable(False, False)
-
+        self.root.iconbitmap(resource_path('shark.ico'))
+        
         # Color scheme
         self.bg_color = "#121212"
         self.header_bg = "#171717"
@@ -37,7 +39,7 @@ class Wordify:
         self.selected_file_path = ctk.StringVar(value="No file selected")
         self.output_file_path = ctk.StringVar(value='No file selected')
         
-        with open('wordify.json', 'r') as file:
+        with open(resource_path("wordify.json"), 'r') as file:
             config = json.load(file)
             output_file = config['output_file_path']
             self.output_file_path.set(value=output_file)
@@ -182,6 +184,13 @@ class Wordify:
             command=self.start_conversion
         )
         convert_btn.pack(pady=30)
+
+        self.converstion_message = ctk.CTkLabel(
+            self.home_page,
+            text='',
+            font=self.font_small
+        )
+        self.converstion_message.pack()
         
         self.about_page = ctk.CTkFrame(
             self.pages_container,
@@ -242,7 +251,7 @@ class Wordify:
         check_update_btn.pack(pady=(0, 15))
         
         try:
-            with open('wordify.json', 'r') as file:
+            with open(resource_path("wordify.json"), 'r') as file:
                 config = json.load(file)
                 version = config.get("version", "Unknown")
         except Exception as e:
@@ -384,18 +393,21 @@ class Wordify:
                 self.selected_file_path.set("Select a PDF file to convert!")
                 return
 
-            with open('wordify.json', 'r') as file:
+            with open(resource_path("wordify.json"), 'r') as file:
                 config = json.load(file)
                 output_folder = config.get("output_file_path")
 
             if not output_folder or not os.path.isdir(output_folder):
                 print("⚠️ Invalid or missing output folder path.")
+                self.converstion_message.configure(text='Invalid Output path. head to settings to set your preferred output path.', text_color=self.error)
                 return
 
             output_file_path = os.path.join(output_folder, "converted.docx")
 
             extracted_text = extract_text_from_pdf(pdf_path)
             save_text_to_word_format(extracted_text, output_file_path)
+
+            self.converstion_message.configure(text='File has been converted successfully.', text_color=self.success)
 
             print(f"✅ Conversion complete. Saved to: {output_file_path}")
         except Exception as e:
@@ -466,14 +478,14 @@ class Wordify:
                 self.output_file_path.set(folder_path)
 
                 # Load existing JSON data
-                with open('wordify.json', 'r') as file:
+                with open(resource_path("wordify.json"), 'r') as file:
                     data = json.load(file)
 
                 # Update or create the output_file_path entry
                 data['output_file_path'] = folder_path
 
                 # Write back to the file
-                with open('wordify.json', 'w') as file:
+                with open(resource_path("wordify.json"), 'w') as file:
                     json.dump(data, file, indent=4)
 
                 print(f"✅ Saved output folder path: {folder_path}")

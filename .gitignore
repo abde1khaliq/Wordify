@@ -3,3 +3,6 @@ Pipfile
 *.lock
 output
 __pycache__
+build
+dist
+*.spec

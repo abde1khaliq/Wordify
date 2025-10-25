@@ -2,12 +2,13 @@ import requests
 import json
 import os
 from packaging import version
+from res_path import resource_path
 
 url = 'https://raw.githubusercontent.com/abde1khaliq/Wordify/refs/heads/master/wordify.json'
 
 def check_for_updates():
     try:
-        with open('wordify.json', 'r') as file:
+        with open(resource_path("wordify.json"), 'r') as file:
             local_config = json.load(file)
 
         response = requests.get(url)
