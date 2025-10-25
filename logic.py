@@ -2,17 +2,17 @@ import fitz
 from docx import Document
 import json
 import os
+from html2docx import html2docx
 
 def extract_text_from_pdf(pdf_path):
-    pdf_file = fitz.open(pdf_path)
-    full_text = ""
-    for page in pdf_file:
-        full_text += page.get_text() + '\n'
-    pdf_file.close()
-    return full_text
+    doc = fitz.open(pdf_path)
+    html_content = ""
+    for page in doc:
+        html_content += page.get_text("html")  # preserves layout, fonts, styles
+    doc.close()
+    return html_content
 
-def save_text_to_word_format(extracted_content, output_file):
-    doc = Document()
-    for line in extracted_content.splitlines():
-        doc.add_paragraph(line)
-    doc.save(output_file)
+def save_text_to_word_format(extracted_html, output_file):
+    docx_stream = html2docx(extracted_html, 'yaeh')  # returns BytesIO
+    with open(output_file, "wb") as f:
+        f.write(docx_stream.getvalue())  # extract raw bytes
