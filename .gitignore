@@ -1,0 +1,5 @@
+*.pdf
+Pipfile
+*.lock
+output
+__pycache__
