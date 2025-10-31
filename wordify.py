@@ -205,7 +205,7 @@ class Wordify:
         # Entry field for output filename
         self.output_filename_entry = ctk.CTkEntry(
             file_frame,
-            placeholder_text="e.g. my_document.docx",
+            placeholder_text="e.g. my_document",
             font=self.font_small,
             width=300
         )
