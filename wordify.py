@@ -1,11 +1,32 @@
-import customtkinter as ctk
-from tkinter import filedialog
-from logic import extract_text_from_pdf, save_text_to_word_format
 from updater_file import check_for_updates as cfu
+from logic import pdf_extraction_process
 from res_path import resource_path
+from tkinter import filedialog
+import customtkinter as ctk
 import webbrowser
+import threading
 import json
 import os
+import sys
+
+class LabelRedirector:
+    def __init__(self, label_widget, success_color="#10b981", error_color="#ef4444"):
+        self.label = label_widget
+        self.success_color = success_color
+        self.error_color = error_color
+
+    def write(self, message):
+        if message.strip():
+            text = message.strip()
+
+            # Check for error prefix
+            if text.lower().startswith("error") or "failed" in text.lower():
+                self.label.configure(text=text, text_color=self.error_color)
+            else:
+                self.label.configure(text=text, text_color=self.success_color)
+
+    def flush(self):
+        pass
 
 class Wordify:
     def __init__(self):
@@ -150,7 +171,7 @@ class Wordify:
             fg_color=self.secondary_card_bg,
             corner_radius=10
         )
-        file_frame.pack(fill='x', padx=30, pady=10)
+        file_frame.pack(fill='x', padx=20, pady=10)
         
         select_btn = ctk.CTkButton(
             file_frame,
@@ -161,7 +182,7 @@ class Wordify:
             text_color=self.text_color,
             command=self.select_file
         )
-        select_btn.pack(pady=20)
+        select_btn.pack(pady=10)
         
         self.file_label = ctk.CTkLabel(
             file_frame,
@@ -171,6 +192,25 @@ class Wordify:
             wraplength=400
         )
         self.file_label.pack(pady=(0, 20))
+
+        # Label for output filename
+        output_label = ctk.CTkLabel(
+            file_frame,
+            text="Output file name:",
+            font=self.font_small,
+            text_color=self.accent_text
+        )
+        output_label.pack(pady=(0, 5))
+
+        # Entry field for output filename
+        self.output_filename_entry = ctk.CTkEntry(
+            file_frame,
+            placeholder_text="e.g. my_document.docx",
+            font=self.font_small,
+            width=300
+        )
+        self.output_filename_entry.pack(pady=(0, 20))
+
         
         convert_btn = ctk.CTkButton(
             self.home_page,
@@ -183,7 +223,7 @@ class Wordify:
             width=150,
             command=self.start_conversion
         )
-        convert_btn.pack(pady=30)
+        convert_btn.pack(pady=10)
 
         self.converstion_message = ctk.CTkLabel(
             self.home_page,
@@ -246,7 +286,7 @@ class Wordify:
             fg_color=self.btn_orange,
             hover_color=self.btn_hover,
             text_color=self.text_color,
-            command=self.check_for_updates
+            command=lambda: threading.Thread(target=self.check_for_updates, daemon=True).start()
         )
         check_update_btn.pack(pady=(0, 15))
         
@@ -286,40 +326,49 @@ class Wordify:
             font=self.font_header,
             text_color=self.text_color
         )
-        settings_title.pack(pady=(30, 20))
+        settings_title.pack(pady=(10, 20))
 
-        appearance_frame = ctk.CTkFrame(
-            self.settings_page,
-            fg_color=self.secondary_card_bg,
-            corner_radius=10
-        )
-        appearance_frame.pack(fill='x', padx=30, pady=10)
+        # appearance_frame = ctk.CTkFrame(
+        #     self.settings_page,
+        #     fg_color=self.secondary_card_bg,
+        #     corner_radius=10
+        # )
+        # appearance_frame.pack(fill='x', padx=30, pady=10)
         
-        appearance_title = ctk.CTkLabel(
-            appearance_frame,
-            text="Appearance",
-            font=("Poppins", 16, "bold"),
-            text_color=self.text_color
-        )
-        appearance_title.pack(pady=(15, 10))
+        # appearance_title = ctk.CTkLabel(
+        #     appearance_frame,
+        #     text="Appearance",
+        #     font=("Poppins", 16, "bold"),
+        #     text_color=self.text_color
+        # )
+        # appearance_title.pack(pady=(10, 10))
 
-        theme_label = ctk.CTkLabel(
-            appearance_frame,
-            text="Theme:",
-            font=self.font_normal,
-            text_color=self.accent_text
-        )
-        theme_label.pack(pady=(5, 5))
-        
-        theme_option = ctk.CTkOptionMenu(
-            appearance_frame,
-            values=["Dark", "Light", "System"],
-            fg_color=self.btn_orange,
-            button_color=self.btn_orange,
-            button_hover_color=self.btn_hover
-        )
-        theme_option.set("Dark")
-        theme_option.pack(pady=(0, 15))
+        # color_label = ctk.CTkLabel(
+        #     appearance_frame,
+        #     text="Primary button color (hex):",
+        #     font=self.font_small,
+        #     text_color=self.accent_text
+        # )
+        # color_label.pack(pady=(0, 5))
+
+        # self.color_entry = ctk.CTkEntry(
+        #     appearance_frame,
+        #     placeholder_text="#FF8800",
+        #     font=self.font_small,
+        #     width=200
+        # )
+        # self.color_entry.pack(pady=(0, 10))
+
+        # apply_color_btn = ctk.CTkButton(
+        #     appearance_frame,
+        #     text="Apply Color",
+        #     font=self.font_small,
+        #     fg_color=self.btn_orange,
+        #     hover_color=self.btn_orange,
+        #     command=self.apply_btn_orange
+        # )
+        # apply_color_btn.pack(pady=(0, 20))
+
 
         conversion_frame = ctk.CTkFrame(
             self.settings_page,
@@ -386,32 +435,76 @@ class Wordify:
             print("⚠️ Failed to upload file:", e)
             self.selected_file_path.set("Error selecting file.")
 
+    def apply_btn_orange(self):
+        hex_color = self.color_entry.get().strip()
+
+        if not hex_color.startswith("#") or len(hex_color) != 7:
+            self.converstion_message.configure(
+                text="Error: Invalid hex color. Use format #RRGGBB.",
+                text_color="red"
+            )
+            return
+
+        self.btn_orange = hex_color
+        self.converstion_message.configure(
+            text=f"✅ Button color updated to {hex_color}",
+            text_color="green"
+        )
+
     def start_conversion(self):
-        try:
-            pdf_path = self.selected_file_path.get()
-            if not pdf_path or pdf_path == "No file selected":
-                self.selected_file_path.set("Select a PDF file to convert!")
-                return
+        def run_conversion():
+            try:
+                pdf_path = self.selected_file_path.get()
+                if not pdf_path or pdf_path == "No file selected":
+                    self.selected_file_path.set("Select a PDF file to convert!")
+                    return
 
-            with open(resource_path("wordify.json"), 'r') as file:
-                config = json.load(file)
-                output_folder = config.get("output_file_path")
+                with open(resource_path("wordify.json"), 'r') as file:
+                    config = json.load(file)
+                    output_folder = config.get("output_file_path")
 
-            if not output_folder or not os.path.isdir(output_folder):
-                print("⚠️ Invalid or missing output folder path.")
-                self.converstion_message.configure(text='Invalid Output path. head to settings to set your preferred output path.', text_color=self.error)
-                return
+                if not output_folder or not os.path.isdir(output_folder):
+                    print("Error: Invalid or missing output folder path.")
+                    self.converstion_message.configure(
+                        text='Invalid Output path. Head to settings to set your preferred output path.',
+                        text_color=self.error
+                    )
+                    return
 
-            output_file_path = os.path.join(output_folder, "converted.docx")
+                filename = self.output_filename_entry.get().strip()
+                if not filename:
+                    print("Error: Output filename is empty.")
+                    self.converstion_message.configure(
+                        text='Please enter a valid output filename.',
+                        text_color=self.error
+                    )
+                    return
+                if not filename.endswith(".docx"):
+                    filename += ".docx"
 
-            extracted_text = extract_text_from_pdf(pdf_path)
-            save_text_to_word_format(extracted_text, output_file_path)
+                output_file_path = os.path.join(output_folder, filename)
 
-            self.converstion_message.configure(text='File has been converted successfully.', text_color=self.success)
+                # Redirect print to label
+                sys.stdout = LabelRedirector(self.converstion_message, success_color=self.success, error_color=self.error)
+                sys.stderr = LabelRedirector(self.converstion_message, success_color=self.success, error_color=self.error)
 
-            print(f"✅ Conversion complete. Saved to: {output_file_path}")
-        except Exception as e:
-            print("⚠️ Conversion failed:", e)
+                # Run the OCR pipeline
+                pdf_extraction_process(
+                    file_path=pdf_path,
+                    output_path=output_file_path,
+                    max_retries=3,
+                    resume_from=0
+                )
+
+                print(f"✅ Conversion complete. Saved to: {output_file_path}")
+
+            except Exception as e:
+                print(f"Error: Conversion failed — {e}")
+            finally:
+                sys.stdout = sys.__stdout__
+                sys.stderr = sys.__stderr__
+
+        threading.Thread(target=run_conversion, daemon=True).start()
 
     def check_for_updates(self):
         try:
